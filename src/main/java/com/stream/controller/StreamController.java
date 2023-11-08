@@ -1,5 +1,15 @@
 package com.stream.controller;
 
+import java.io.IOException;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -74,6 +84,37 @@ public class StreamController {
 	public boolean save() {
 		employeeRepo.saveAll(StreamPracticeApplication.getAsList());
 		return true;
+	}
+
+	@GetMapping("apache/httpClient")
+	public ResponseEntity<?> httpClient() {
+		CloseableHttpClient createDefault = HttpClients.createDefault();
+		HttpGet httpGet = new HttpGet(
+				"http://10.10.20.238:8765/api/v1/products/resellerProducts?resellerId=RS082300046");
+
+		ResponseHandler<String> responseHandler = response -> {
+			int status = response.getStatusLine().getStatusCode();
+			if (status >= 200 && status < 300) {
+				System.err.println("Response Code :" + status);
+				HttpEntity entity = response.getEntity();
+				return entity != null ? EntityUtils.toString(entity) : null;
+			} else {
+				System.err.println("Throw Exception");
+				System.err.println("Response Code :" + status);
+				throw new ClientProtocolException("Unexpected response status: " + status);
+			}
+		};
+
+		try {
+			String execute = createDefault.execute(httpGet, responseHandler);
+			return ResponseEntity.ok(execute);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return ResponseEntity.badRequest().body(null);
+
 	}
 
 }
